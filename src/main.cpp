@@ -9,6 +9,8 @@ void comandosAT_esp32(int);
 void resetWifi();
 void inicializando_esp32();
 void ciclo_espera_wifi(int time);
+void procesa_dato_eps32();
+void envia_dato_esp32(const char* dato);
 //-------------------------------------------------------
 //----inicializaciones e variables globales--------------
 SoftwareSerial esp32(14,15); //define un esp32 en esa porta serial
@@ -18,6 +20,7 @@ char c;//caracter
 char reponse_esp32[200];
 bool no_respuesta;
 int contador_caracteres_esp32;
+char cell;//identifica un cliente pelo tcp
 //---------------------------------------------------------
 
 //----setup-------------------------------------------------
@@ -37,19 +40,20 @@ void loop() {
     if(!wifi_conectada){
       inicializando_esp32();
     }
-    if(!esp32.available()){//todo el codigo de la logica del programa
+    else if(!esp32.available()){//todo el codigo de la logica del programa
 
 
     }
     else
     { 
-      while(esp32.available()){
-        c = esp32.read();
-        reponse_esp32[contador_caracteres_esp32] =c;
-        contador_caracteres_esp32++;
-        }
-      contador_caracteres_esp32 = 0;
-      //procesa el dato que llego por el esp32
+      int time = millis();
+      ciclo_espera_wifi(time);
+       //procesa el dato que llego por el esp32
+       if (reponse_esp32[0]!=0x00){
+
+       }
+      
+       
     }
     
 }
@@ -146,3 +150,24 @@ void ciclo_espera_wifi(int time){
 
 }
 //-------------------------------------------------------------
+
+void procesa_dato_eps32(){
+  if(strstr(reponse_esp32,"#CONNECT")){
+    cell = reponse_esp32[5];
+    envia_dato_esp32("BELEZA CONNECTED\r\n");
+  }
+  else if(strstr(reponse_esp32,",CLOSED"))
+    cell = '-';
+}
+//----funcion q envia dados pelo esp32------------------
+void envia_dato_esp32(const char* dato){
+  if(cell == '-')
+    return ;
+  char temporal[70];
+  int count = strlen(dato);
+  sprintf(temporal,"AT+CIPSEND=%c,%d\r\n",cell,count);
+  no_respuesta = false;
+  int time = millis();
+  ciclo_espera_wifi(time);
+  esp32.write(dato);
+}
