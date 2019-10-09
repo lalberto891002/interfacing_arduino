@@ -1,17 +1,26 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
-#define TIMEOUT 2000
+//----define de constantes-----------
+#define TIMEOUT 3000
+//-----------------------------------
+//----define de funciones----------------
 void incializa_variables_esp32();
 void comandosAT_esp32(int);
 void resetWifi();
 void inicializando_esp32();
-SoftwareSerial esp32(14,15);
+void ciclo_espera_wifi(int time);
+//-------------------------------------------------------
+//----inicializaciones e variables globales--------------
+SoftwareSerial esp32(14,15); //define un esp32 en esa porta serial
 bool wifi_conectada;
 int step_wifi;
 char c;//caracter 
 char reponse_esp32[200];
 bool no_respuesta;
 int contador_caracteres_esp32;
+//---------------------------------------------------------
+
+//----setup-------------------------------------------------
 void setup() {
   // put your setup code here, to run once:
   incializa_variables_esp32();
@@ -19,7 +28,8 @@ void setup() {
   esp32.begin(115200);//inciando a porta serial do esp32
 
 }
-
+//-----------------------------------------------------------
+//----main loop---------------------------------------------
 void loop() {
   
   // put your main code here, to run repeatedly:
@@ -42,12 +52,11 @@ void loop() {
       //procesa el dato que llego por el esp32
     }
     
-
-
-
 }
+//------------------------------------------------------------------------------
 
 
+//----funcion para enviar comandos at al esp32----------------------------------
 void comandosAT_esp32(int step){
   char temp[20];
   sprintf(temp,"step wifi:%d\r\n",step);
@@ -82,38 +91,58 @@ void comandosAT_esp32(int step){
 
 
 }
-
+//---- funcion para inicializar as variaveis do esp32
 void incializa_variables_esp32(){
   wifi_conectada = false;
   step_wifi = 0;
   contador_caracteres_esp32 = 0;
 
 }
-
+//---------------------------------------------------
+//----funcion q resetea la conexion------------------
 void resetWifi(){
   wifi_conectada = false;
   incializa_variables_esp32();
 }
-
+//-----------------------------------------------------
+//----funcion q inicializa esp32--------------------------
 void inicializando_esp32(){
   //si la red wifi no esta aun acticada
     comandosAT_esp32(step_wifi);
     //esperando respuesta del esp32
     long int time = millis();
     while(!no_respuesta && (time+TIMEOUT>millis())){
+      ciclo_espera_wifi(time);
+      reponse_esp32[contador_caracteres_esp32] = 0x00;
+      contador_caracteres_esp32 = 0;
+       if(strstr(reponse_esp32,"Ready")){
+          no_respuesta = false;
+          time = millis();
+          ciclo_espera_wifi(time);
+
+
+      }
+      if(strstr(reponse_esp32,"OK"))
+        step_wifi++;
+      else if(strstr(reponse_esp32,"ERR"))
+        step_wifi = 0;//ocurrio un error
+       delay(2000);//espera de dos segundos 
+     
+    }
+
+}
+
+//--------------------------------------------------------
+//----funcion q espera o pacote do esp32------------------
+void ciclo_espera_wifi(int time){
+ while(!no_respuesta && (time+TIMEOUT>millis())){
       while(esp32.available()){
         c = esp32.read();
         reponse_esp32[contador_caracteres_esp32] =c;
         contador_caracteres_esp32++;
         no_respuesta = true;
       }
-      reponse_esp32[contador_caracteres_esp32] = 0x00;
-      contador_caracteres_esp32 = 0;
-      if(strstr(reponse_esp32,"OK"))
-        step_wifi++;
-      else if(strstr(reponse_esp32,"ERR"))
-        step_wifi = 0;//ocurrio un error
-       delay(2000);//espera de dos segundo 
-    }
+  }
 
 }
+//-------------------------------------------------------------
