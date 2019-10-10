@@ -10,7 +10,7 @@ void incializa_variables_esp32();
 void comandosAT_esp32(int);
 void resetWifi();
 void inicializando_esp32();
-void ciclo_espera_wifi(int time);
+void ciclo_espera_wifi(long int time);
 void procesa_dato_eps32();
 void envia_dato_esp32(const char* dato);
 //-------------------------------------------------------
@@ -48,7 +48,7 @@ void loop() {
     }
     else
     { 
-      int time = millis();
+      long int time = millis();
       ciclo_espera_wifi(time);
        //procesa el dato que llego por el esp32
        if (reponse_esp32[0]!=0x00){
@@ -151,7 +151,7 @@ void inicializando_esp32(){
 
 //--------------------------------------------------------
 //----funcion q espera o pacote do esp32------------------
-void ciclo_espera_wifi(int time){
+void ciclo_espera_wifi(long int time){
  while(!no_respuesta && (time+TIMEOUT>millis())){
       while(esp32.available()){
         c = esp32.read();
