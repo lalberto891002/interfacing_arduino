@@ -155,6 +155,11 @@ void ciclo_espera_wifi(int time){
  while(!no_respuesta && (time+TIMEOUT>millis())){
       while(esp32.available()){
         c = esp32.read();
+        if(c == '>'){
+          reponse_esp32[0]='>';
+          contador_caracteres_esp32 = 0;
+          return;
+        }
         reponse_esp32[contador_caracteres_esp32] =c;
         contador_caracteres_esp32++;
         no_respuesta = true;
@@ -182,5 +187,9 @@ void envia_dato_esp32(const char* dato){
   no_respuesta = false;
   int time = millis();
   ciclo_espera_wifi(time);
-  esp32.write(dato);
+  if(reponse_esp32[0] == '>')
+    esp32.print(dato);
+  else
+    Serial.print("Error enviando dados\r\n"); 
+    
 }
