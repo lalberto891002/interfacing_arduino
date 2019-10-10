@@ -2,6 +2,8 @@
 #include <SoftwareSerial.h>
 //----define de constantes-----------
 #define TIMEOUT 3000
+#define TEST_CONFIG_ESP32  true
+#define TEST_PACOTES_ESP32 true
 //-----------------------------------
 //----define de funciones----------------
 void incializa_variables_esp32();
@@ -50,10 +52,13 @@ void loop() {
       ciclo_espera_wifi(time);
        //procesa el dato que llego por el esp32
        if (reponse_esp32[0]!=0x00){
-
+          if(TEST_PACOTES_ESP32){
+            char respuesta[200];
+            sprintf(respuesta,"ESP32 COnfig:%s\r\n",reponse_esp32);
+            Serial.print(respuesta);
+          }
        }
-      
-       
+        
     }
     
 }
@@ -63,8 +68,10 @@ void loop() {
 //----funcion para enviar comandos at al esp32----------------------------------
 void comandosAT_esp32(int step){
   char temp[20];
+  if(TEST_CONFIG_ESP32){
   sprintf(temp,"step wifi:%d\r\n",step);
   Serial.print(temp);
+  }
   switch(step){
     case 0:
       esp32.print("AT+RESTORE\r\n");
@@ -119,6 +126,12 @@ void inicializando_esp32(){
       ciclo_espera_wifi(time);
       reponse_esp32[contador_caracteres_esp32] = 0x00;
       contador_caracteres_esp32 = 0;
+      if(TEST_CONFIG_ESP32){
+        char respuesta[200];
+        sprintf(respuesta,"ESP32 COnfig:%s\r\n",reponse_esp32);
+        Serial.print(respuesta);
+      }
+
        if(strstr(reponse_esp32,"Ready")){
           no_respuesta = false;
           time = millis();
